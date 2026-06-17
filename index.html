@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HomeFind — Rentals</title>
+  <meta name="description" content="Browse available rental properties from verified landlords in your area." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand: #c8702a;
+      --brand-light: #f5ede4;
+      --brand-dark: #a05520;
+      --text: #1a1208;
+      --text-muted: #6b5e50;
+      --border: #e8ddd4;
+      --bg: #faf8f6;
+      --white: #ffffff;
+      --danger: #dc3545;
+      --card-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      --card-shadow-hover: 0 8px 32px rgba(0,0,0,0.14);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ========== SHARED ========== */
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .form-group label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: var(--bg);
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(200,112,42,0.12);
+    }
+    .form-group textarea { resize: vertical; min-height: 100px; }
+    .btn-primary {
+      background: var(--brand); color: #fff; border: none; padding: 10px 20px;
+      border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: background 0.2s;
+    }
+    .btn-primary:hover { background: var(--brand-dark); }
+    .btn-primary.full-width { width: 100%; padding: 12px; font-size: 1rem; }
+    .btn-ghost {
+      background: none; border: 1px solid var(--border); color: var(--text-muted);
+      padding: 8px 16px; border-radius: 8px; font-size: 0.875rem; font-weight: 500;
+      cursor: pointer; font-family: inherit; display: flex; align-items: center;
+      gap: 6px; text-decoration: none; transition: all 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-secondary {
+      background: var(--brand-light); color: var(--brand); border: 1px solid rgba(200,112,42,0.2);
+      padding: 9px 16px; border-radius: 8px; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: background 0.2s;
+    }
+    .btn-secondary:hover { background: #ecd9c9; }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+    .btn-danger {
+      background: #fee2e2; color: var(--danger); border: 1px solid #fca5a5;
+      padding: 9px 16px; border-radius: 8px; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: background 0.2s;
+    }
+    .btn-danger:hover { background: #fecaca; }
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 80px 24px; text-align: center; gap: 12px; color: var(--text-muted);
+    }
+    .empty-state p { font-size: 1.1rem; font-weight: 600; }
+    .empty-state span { font-size: 0.875rem; }
+
+    /* ========== VISITOR ========== */
+    #visitorApp .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    /* Header */
+    .site-header { background: var(--white); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .logo { display: flex; align-items: center; gap: 8px; font-size: 1.2rem; font-weight: 700; color: var(--brand); text-decoration: none; cursor: pointer; }
+    .header-nav { display: flex; align-items: center; gap: 24px; }
+    .nav-link { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+    .nav-link:hover { color: var(--brand); }
+    .btn-admin { background: var(--brand); color: var(--white); padding: 8px 18px; border-radius: 8px; text-decoration: none; font-size: 0.875rem; font-weight: 600; transition: background 0.2s; cursor: pointer; border: none; font-family: inherit; }
+    .btn-admin:hover { background: var(--brand-dark); }
+
+    /* Hero */
+    .hero { background: linear-gradient(135deg, #2d1a06 0%, #5c2e00 50%, #8b4513 100%); padding: 80px 0 90px; color: var(--white); position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+    .hero-inner { position: relative; text-align: center; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .hero-badge { display: inline-block; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 20px; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; line-height: 1.15; margin-bottom: 16px; }
+    .accent { color: #f5b878; }
+    .hero-sub { font-size: 1.1rem; opacity: 0.85; max-width: 480px; margin: 0 auto 32px; }
+    .search-bar { display: flex; align-items: center; background: var(--white); border-radius: 50px; padding: 6px 8px 6px 18px; max-width: 560px; margin: 0 auto; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .search-icon { color: var(--text-muted); flex-shrink: 0; margin-right: 8px; }
+    .search-bar input { flex: 1; border: none; outline: none; font-size: 0.95rem; color: var(--text); background: transparent; font-family: inherit; }
+    .search-bar input::placeholder { color: #aaa; }
+
+    /* Filters */
+    .filters-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 14px 0; }
+    .filters-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .filter-group input, .filter-group select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; color: var(--text); background: var(--bg); font-family: inherit; outline: none; width: 130px; transition: border-color 0.2s; }
+    .filter-group input:focus, .filter-group select:focus { border-color: var(--brand); }
+    .btn-reset { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: none; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; color: var(--text-muted); cursor: pointer; font-family: inherit; transition: all 0.2s; align-self: flex-end; }
+    .btn-reset:hover { border-color: var(--brand); color: var(--brand); }
+
+    /* Listings */
+    .listings-section { padding: 48px 0 64px; }
+    .listings-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+    .listings-header h2 { font-size: 1.5rem; font-weight: 700; }
+    .count-badge { background: var(--brand-light); color: var(--brand); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .listings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+
+    /* Property card */
+    .property-card { background: var(--white); border-radius: var(--radius); overflow: hidden; box-shadow: var(--card-shadow); transition: transform 0.25s, box-shadow 0.25s; cursor: pointer; border: 1px solid var(--border); }
+    .property-card:hover { transform: translateY(-4px); box-shadow: var(--card-shadow-hover); }
+    .card-image { position: relative; height: 210px; background: #f0e8df; overflow: hidden; }
+    .card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+    .property-card:hover .card-image img { transform: scale(1.04); }
+    .card-image-placeholder { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #c4b5a0; gap: 8px; font-size: 0.8rem; }
+    .card-type-badge { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.65); color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+    .card-photo-count { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.55); color: #fff; padding: 3px 9px; border-radius: 6px; font-size: 0.75rem; display: flex; align-items: center; gap: 4px; }
+    .card-body { padding: 18px 20px 20px; }
+    .card-price { font-size: 1.3rem; font-weight: 700; color: var(--brand); margin-bottom: 4px; }
+    .card-price span { font-size: 0.85rem; font-weight: 500; color: var(--text-muted); }
+    .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 6px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-address { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 4px; }
+    .card-meta { display: flex; gap: 16px; font-size: 0.82rem; color: var(--text-muted); }
+    .card-meta-item { display: flex; align-items: center; gap: 4px; font-weight: 500; }
+
+    /* Contact section */
+    .contact-section { background: var(--brand-light); border-top: 1px solid rgba(200,112,42,0.2); border-bottom: 1px solid rgba(200,112,42,0.2); padding: 60px 0; }
+    .contact-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+    .contact-text h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; }
+    .contact-text p { color: var(--text-muted); max-width: 480px; }
+    .btn-cta { display: inline-block; background: var(--brand); color: var(--white); padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 1rem; transition: background 0.2s, transform 0.2s; white-space: nowrap; cursor: pointer; border: none; font-family: inherit; }
+    .btn-cta:hover { background: var(--brand-dark); transform: translateY(-1px); }
+
+    /* Footer */
+    .site-footer { background: #1a0e04; color: #8a7060; padding: 32px 0; }
+    .footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .footer-logo { display: flex; align-items: center; gap: 8px; color: #c8702a; font-weight: 700; font-size: 1rem; }
+    .site-footer p { font-size: 0.82rem; }
+
+    /* Visitor modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 1000; display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px 16px; overflow-y: auto; backdrop-filter: blur(4px); }
+    .modal-box { background: var(--white); border-radius: 16px; width: 100%; max-width: 760px; position: relative; animation: modalIn 0.25s ease; margin-bottom: 32px; }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .modal-close { position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.08); border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; transition: background 0.2s; color: var(--text); }
+    .modal-close:hover { background: rgba(0,0,0,0.15); }
+    .modal-slideshow { position: relative; height: 340px; background: #1a0e04; border-radius: 16px 16px 0 0; overflow: hidden; }
+    .modal-slideshow img { width: 100%; height: 100%; object-fit: cover; }
+    .slideshow-no-photo { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #555; flex-direction: column; gap: 8px; }
+    .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: #fff; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+    .slide-btn:hover { background: rgba(0,0,0,0.75); }
+    .slide-prev { left: 12px; }
+    .slide-next { right: 12px; }
+    .slide-dots { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
+    .slide-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.5); cursor: pointer; border: none; transition: background 0.2s; }
+    .slide-dot.active { background: #fff; }
+    .modal-body { padding: 28px 32px 32px; }
+    .modal-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 8px; flex-wrap: wrap; }
+    .modal-title { font-size: 1.4rem; font-weight: 700; line-height: 1.3; }
+    .modal-price { font-size: 1.5rem; font-weight: 700; color: var(--brand); white-space: nowrap; }
+    .modal-price small { font-size: 0.85rem; font-weight: 500; color: var(--text-muted); }
+    .modal-address { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; display: flex; align-items: center; gap: 5px; }
+    .modal-specs { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 20px; padding: 16px; background: var(--bg); border-radius: 10px; }
+    .modal-spec { display: flex; flex-direction: column; gap: 2px; }
+    .modal-spec label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; }
+    .modal-spec span { font-size: 1rem; font-weight: 700; }
+    .modal-section-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin: 20px 0 8px; }
+    .modal-desc { font-size: 0.95rem; color: var(--text); white-space: pre-wrap; line-height: 1.7; }
+    .amenity-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .amenity-pill { background: var(--brand-light); color: var(--brand-dark); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+    .modal-map { width: 100%; height: 280px; border-radius: 10px; border: 1px solid var(--border); margin-top: 8px; }
+    .modal-contact { margin-top: 24px; padding: 16px; background: var(--brand-light); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .modal-contact p { font-size: 0.95rem; font-weight: 600; }
+    .modal-contact span { font-size: 0.85rem; color: var(--text-muted); }
+    .btn-call { display: inline-block; background: var(--brand); color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: background 0.2s; }
+    .btn-call:hover { background: var(--brand-dark); }
+
+    /* ========== ADMIN ========== */
+    /* Login */
+    .login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #2d1a06 0%, #5c2e00 50%, #8b4513 100%); padding: 24px; }
+    .login-card { background: var(--white); border-radius: 16px; padding: 40px 36px; width: 100%; max-width: 400px; box-shadow: 0 24px 80px rgba(0,0,0,0.35); }
+    .login-logo { display: flex; align-items: center; gap: 10px; color: var(--brand); font-size: 1.3rem; font-weight: 800; margin-bottom: 24px; }
+    .login-card h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
+    .login-sub { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 28px; }
+    .login-error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 10px 14px; border-radius: 8px; font-size: 0.875rem; margin-bottom: 16px; }
+    .lockout-banner { background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; line-height: 1.4; }
+    .attempts-warning { background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 10px; }
+
+    /* Admin header */
+    .admin-header { background: var(--white); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .admin-header-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .admin-main { padding: 32px 0 64px; }
+    .admin-container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* Stats */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 20px; }
+    .stat-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--brand); }
+
+    /* Tabs */
+    .tab-bar { display: flex; gap: 4px; background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 24px; width: fit-content; }
+    .tab-btn { padding: 8px 18px; border: none; border-radius: 7px; font-size: 0.875rem; font-weight: 500; cursor: pointer; font-family: inherit; background: none; color: var(--text-muted); transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+    .tab-btn.active { background: var(--brand); color: #fff; }
+    .tab-btn:not(.active):hover { background: var(--brand-light); color: var(--brand); }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    .pane-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .pane-header h2 { font-size: 1.3rem; font-weight: 700; }
+
+    /* Admin listings grid */
+    .admin-listings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+    .admin-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; transition: box-shadow 0.2s; }
+    .admin-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .admin-card-img { height: 160px; background: #f0e8df; position: relative; overflow: hidden; }
+    .admin-card-img img { width: 100%; height: 100%; object-fit: cover; }
+    .admin-card-no-img { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #c4b5a0; }
+    .admin-card-body { padding: 14px 16px; }
+    .admin-card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; line-height: 1.3; }
+    .admin-card-meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
+    .admin-card-price { font-size: 1.1rem; font-weight: 700; color: var(--brand); margin-bottom: 14px; }
+    .admin-card-actions { display: flex; gap: 8px; }
+    .btn-edit { flex: 1; background: var(--brand-light); color: var(--brand); border: 1px solid rgba(200,112,42,0.2); padding: 7px 12px; border-radius: 7px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 5px; transition: background 0.2s; }
+    .btn-edit:hover { background: #ecd9c9; }
+    .btn-del { background: #fee2e2; color: var(--danger); border: 1px solid #fca5a5; padding: 7px 12px; border-radius: 7px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 5px; transition: background 0.2s; }
+    .btn-del:hover { background: #fecaca; }
+
+    /* Property form */
+    .property-form { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 28px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; margin-bottom: 24px; }
+    .span-2 { grid-column: span 2; }
+    .req { color: var(--brand); }
+    .label-hint { font-size: 0.75rem; color: var(--text-muted); font-weight: 400; margin-left: 6px; }
+    .field-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border); padding-top: 20px; }
+
+    /* Photo upload */
+    .photo-upload-area { border: 2px dashed var(--border); border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; color: var(--text-muted); transition: border-color 0.2s, background 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .photo-upload-area:hover { border-color: var(--brand); background: var(--brand-light); }
+    .photo-upload-area p { font-size: 0.9rem; font-weight: 500; }
+    .photo-upload-area span { font-size: 0.75rem; }
+    .photo-url-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .photo-url-row input { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; font-family: inherit; outline: none; }
+    .photo-url-row input:focus { border-color: var(--brand); }
+    .photo-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 8px; }
+    .photo-thumb { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-thumb-remove { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.65); color: #fff; border: none; width: 22px; height: 22px; border-radius: 50%; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .map-preview { margin: 8px 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+    .map-preview iframe { width: 100%; height: 240px; border: none; display: block; }
+
+    /* Amenities */
+    .amenities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top: 4px; }
+    .check-label { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; cursor: pointer; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; transition: all 0.15s; }
+    .check-label:hover { border-color: var(--brand); background: var(--brand-light); }
+    .check-label input[type=checkbox] { accent-color: var(--brand); width: 15px; height: 15px; }
+
+    /* Settings */
+    .settings-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 24px; margin-bottom: 20px; }
+    .settings-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
+    .settings-card.danger-zone { border-color: #fca5a5; }
+    .settings-card.danger-zone h3 { color: var(--danger); }
+    .settings-card.danger-zone p { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 14px; }
+    .settings-msg { padding: 10px 14px; border-radius: 8px; font-size: 0.875rem; margin-bottom: 14px; }
+    .settings-msg.success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+    .settings-msg.error { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+    /* Confirm modal */
+    .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .confirm-box { background: var(--white); border-radius: 12px; padding: 28px; max-width: 380px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .confirm-box h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+    .confirm-box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 28px; right: 28px; background: #1a1208; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 0.9rem; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.25); z-index: 9999; animation: toastIn 0.3s ease; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .toast.success { background: #065f46; }
+    .toast.error { background: #b91c1c; }
+
+    @media (max-width: 640px) {
+      .header-nav .nav-link { display: none; }
+      .filters-inner { gap: 10px; }
+      .filter-group input, .filter-group select { width: 100px; }
+      .contact-inner { flex-direction: column; text-align: center; }
+      .modal-body { padding: 20px; }
+      .modal-specs { gap: 16px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .span-2 { grid-column: span 1; }
+      .amenities-grid { grid-template-columns: 1fr 1fr; }
+      .property-form { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== VISITOR APP ==================== -->
+<div id="visitorApp">
+  <header class="site-header">
+    <div class="container header-inner">
+      <span class="logo" onclick="goHome()">
+        <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><path d="M14 2L2 12h3v14h7v-8h4v8h7V12h3L14 2z" fill="currentColor"/></svg>
+        HomeFind
+      </span>
+      <nav class="header-nav">
+        <a href="#listings" class="nav-link">Browse</a>
+        <a href="#contact" class="nav-link">Contact</a>
+        <button class="btn-admin" onclick="goAdmin()">Landlord Login</button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge">Verified Properties</div>
+      <h1>Find Your Next<br/><span class="accent">Perfect Home</span></h1>
+      <p class="hero-sub">Browse available rental properties from verified landlords in your area.</p>
+      <div class="search-bar">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by location, title, or keyword..." oninput="applySearch()" />
+      </div>
+    </div>
+  </section>
+
+  <section class="filters-bar">
+    <div class="filters-inner">
+      <div class="filter-group"><label>Min Price ($)</label><input type="number" id="filterMinPrice" placeholder="Any" min="0" oninput="applySearch()" /></div>
+      <div class="filter-group"><label>Max Price ($)</label><input type="number" id="filterMaxPrice" placeholder="Any" min="0" oninput="applySearch()" /></div>
+      <div class="filter-group">
+        <label>Bedrooms</label>
+        <select id="filterBedrooms" onchange="applySearch()">
+          <option value="">Any</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Type</label>
+        <select id="filterType" onchange="applySearch()">
+          <option value="">Any</option><option value="Apartment">Apartment</option><option value="House">House</option><option value="Studio">Studio</option><option value="Townhouse">Townhouse</option><option value="Villa">Villa</option><option value="Room">Room</option>
+        </select>
+      </div>
+      <button class="btn-reset" onclick="resetFilters()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Reset
+      </button>
+    </div>
+  </section>
+
+  <section class="listings-section" id="listings">
+    <div class="container">
+      <div class="listings-header">
+        <h2>Available Properties</h2>
+        <span id="listingsCount" class="count-badge">Loading...</span>
+      </div>
+      <div id="listingsGrid" class="listings-grid"></div>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <svg width="56" height="56" viewBox="0 0 64 64" fill="none"><path d="M32 8L8 28h6v28h14V42h8v14h14V28h6L32 8z" stroke="#c4b5a0" stroke-width="2" fill="none"/></svg>
+        <p>No properties found</p>
+        <span>Try adjusting your search or filters</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact-section" id="contact">
+    <div class="contact-inner">
+      <div class="contact-text">
+        <h2>Are you a Landlord?</h2>
+        <p>List your vacant property and reach thousands of potential tenants today. It's free and easy.</p>
+      </div>
+      <button class="btn-cta" onclick="goAdmin()">Add Your Property &rarr;</button>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-logo">
+        <svg width="20" height="20" viewBox="0 0 28 28" fill="none"><path d="M14 2L2 12h3v14h7v-8h4v8h7V12h3L14 2z" fill="currentColor"/></svg>
+        HomeFind
+      </div>
+      <p>&copy; 2024 HomeFind. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Property Modal -->
+  <div id="propertyModal" class="modal-overlay" style="display:none" onclick="closeModal(event)">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closePropertyModal()">&times;</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ADMIN APP ==================== -->
+<div id="adminRoot" style="display:none">
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <svg width="36" height="36" viewBox="0 0 28 28" fill="none"><path d="M14 2L2 12h3v14h7v-8h4v8h7V12h3L14 2z" fill="currentColor"/></svg>
+        HomeFind
+      </div>
+      <h1>Landlord Portal</h1>
+      <p class="login-sub">Sign in to manage your property listings</p>
+      <div id="loginError" class="login-error" style="display:none"></div>
+      <div id="lockoutBanner" class="lockout-banner" style="display:none"></div>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group"><label>Username</label><input type="text" id="loginUser" placeholder="admin" required autocomplete="username" /></div>
+        <div class="form-group"><label>Password</label><input type="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password" /></div>
+        <div id="attemptsWarning" class="attempts-warning" style="display:none"></div>
+        <button type="submit" id="loginSubmitBtn" class="btn-primary full-width">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div id="adminDashboard" style="display:none">
+    <header class="admin-header">
+      <div class="admin-header-inner">
+        <span class="logo" onclick="goHome()">
+          <svg width="24" height="24" viewBox="0 0 28 28" fill="none"><path d="M14 2L2 12h3v14h7v-8h4v8h7V12h3L14 2z" fill="currentColor"/></svg>
+          HomeFind Admin
+        </span>
+        <div class="header-actions">
+          <button class="btn-ghost" onclick="goHome()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            View Site
+          </button>
+          <button class="btn-ghost" onclick="handleLogout()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <div class="admin-container">
+        <div class="stats-row" id="statsRow"></div>
+        <div class="tab-bar">
+          <button class="tab-btn active" id="tabBtnListings" onclick="switchTab('listings',this)">My Listings</button>
+          <button class="tab-btn" id="tabBtnAdd" onclick="switchTab('add',this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Property
+          </button>
+          <button class="tab-btn" id="tabBtnSettings" onclick="switchTab('settings',this)">Settings</button>
+        </div>
+
+        <!-- LISTINGS TAB -->
+        <div id="tab-listings" class="tab-pane active">
+          <div class="pane-header">
+            <h2>Your Properties</h2>
+            <button class="btn-primary" onclick="switchTab('add', document.getElementById('tabBtnAdd'))">+ Add New</button>
+          </div>
+          <div id="adminListingsGrid" class="admin-listings-grid"></div>
+          <div class="empty-state" id="adminEmptyState" style="display:none">
+            <svg width="48" height="48" viewBox="0 0 64 64" fill="none"><path d="M32 8L8 28h6v28h14V42h8v14h14V28h6L32 8z" stroke="#c4b5a0" stroke-width="2" fill="none"/></svg>
+            <p>No properties yet</p>
+            <button class="btn-primary" style="margin-top:8px" onclick="switchTab('add', document.getElementById('tabBtnAdd'))">Add your first property</button>
+          </div>
+        </div>
+
+        <!-- ADD/EDIT TAB -->
+        <div id="tab-add" class="tab-pane" style="display:none">
+          <div class="pane-header"><h2 id="formTitle">Add New Property</h2></div>
+          <form id="propertyForm" onsubmit="saveProperty(event)" class="property-form">
+            <input type="hidden" id="editId" />
+            <div class="form-grid">
+              <div class="form-group span-2"><label>Property Title <span class="req">*</span></label><input type="text" id="fTitle" placeholder="e.g. Modern 2-Bedroom Apartment in Westlands" required /></div>
+              <div class="form-group"><label>Property Type <span class="req">*</span></label>
+                <select id="fType" required><option value="">Select type...</option><option value="Apartment">Apartment</option><option value="House">House</option><option value="Studio">Studio</option><option value="Townhouse">Townhouse</option><option value="Villa">Villa</option><option value="Room">Room</option></select>
+              </div>
+              <div class="form-group"><label>Monthly Rent (USD) <span class="req">*</span></label><input type="number" id="fPrice" placeholder="e.g. 1200" min="0" required /></div>
+              <div class="form-group"><label>Bedrooms</label><input type="number" id="fBedrooms" placeholder="e.g. 2" min="0" max="20" /></div>
+              <div class="form-group"><label>Bathrooms</label><input type="number" id="fBathrooms" placeholder="e.g. 1" min="0" max="20" /></div>
+              <div class="form-group"><label>Area (sq ft)</label><input type="number" id="fArea" placeholder="e.g. 850" min="0" /></div>
+              <div class="form-group"><label>Contact Phone</label><input type="tel" id="fPhone" placeholder="+1 555 000 0000" /></div>
+              <div class="form-group span-2"><label>Address / Location</label><input type="text" id="fAddress" placeholder="e.g. 24 Park Avenue, Nairobi, Kenya" /></div>
+              <div class="form-group span-2"><label>Description <span class="req">*</span></label><textarea id="fDesc" rows="5" placeholder="Describe the property — features, nearby amenities, availability date..." required></textarea></div>
+              <div class="form-group span-2">
+                <label>Google Maps Location <span class="label-hint">Paste a Google Maps share link or embed URL</span></label>
+                <input type="text" id="fMapUrl" placeholder="https://maps.google.com/maps?q=... or embed src URL" />
+                <p class="field-hint">In Google Maps: click Share → Copy link. Or click Embed a map → copy the full iframe src URL.</p>
+                <div id="mapPreview" class="map-preview" style="display:none"></div>
+                <button type="button" class="btn-secondary btn-sm" style="margin-top:6px" onclick="previewMap()">Preview Map</button>
+              </div>
+              <div class="form-group span-2">
+                <label>Property Photos <span class="label-hint">Upload images or add URLs</span></label>
+                <div class="photo-upload-area" id="photoUploadArea" ondragover="dragOver(event)" ondrop="dropFiles(event)" onclick="document.getElementById('photoFileInput').click()">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <p>Drag & drop photos here, or <strong>click to browse</strong></p>
+                  <span>JPG, PNG, WEBP — max 5MB each</span>
+                </div>
+                <input type="file" id="photoFileInput" multiple accept="image/*" style="display:none" onchange="handleFileSelect(event)" />
+                <div class="photo-url-row">
+                  <input type="url" id="photoUrlInput" placeholder="Or paste an image URL and press Enter" />
+                  <button type="button" class="btn-secondary btn-sm" onclick="addPhotoUrl()">Add URL</button>
+                </div>
+                <div id="photoPreviewGrid" class="photo-preview-grid"></div>
+              </div>
+              <div class="form-group span-2">
+                <label>Amenities</label>
+                <div class="amenities-grid">
+                  <label class="check-label"><input type="checkbox" id="amWifi" /> WiFi</label>
+                  <label class="check-label"><input type="checkbox" id="amParking" /> Parking</label>
+                  <label class="check-label"><input type="checkbox" id="amPool" /> Swimming Pool</label>
+                  <label class="check-label"><input type="checkbox" id="amGym" /> Gym</label>
+                  <label class="check-label"><input type="checkbox" id="amSecurity" /> Security</label>
+                  <label class="check-label"><input type="checkbox" id="amWater" /> Water Included</label>
+                  <label class="check-label"><input type="checkbox" id="amElec" /> Electricity Included</label>
+                  <label class="check-label"><input type="checkbox" id="amFurnished" /> Furnished</label>
+                  <label class="check-label"><input type="checkbox" id="amPets" /> Pets Allowed</label>
+                  <label class="check-label"><input type="checkbox" id="amGarden" /> Garden</label>
+                </div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-ghost" onclick="cancelEdit()">Cancel</button>
+              <button type="submit" class="btn-primary" id="submitBtn">Save Property</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- SETTINGS TAB -->
+        <div id="tab-settings" class="tab-pane" style="display:none">
+          <div class="pane-header"><h2>Settings</h2></div>
+          <div class="settings-card">
+            <h3>Change Password</h3>
+            <form onsubmit="changePassword(event)">
+              <div class="form-group"><label>Current Password</label><input type="password" id="sOldPass" required /></div>
+              <div class="form-group"><label>New Password</label><input type="password" id="sNewPass" required minlength="8" /></div>
+              <div class="form-group"><label>Confirm New Password</label><input type="password" id="sConfirmPass" required minlength="8" /></div>
+              <div id="settingsMsg" class="settings-msg" style="display:none"></div>
+              <button type="submit" class="btn-primary">Update Password</button>
+            </form>
+          </div>
+          <div class="settings-card danger-zone">
+            <h3>Danger Zone</h3>
+            <p>Delete all property listings. This cannot be undone.</p>
+            <button class="btn-danger" onclick="deleteAll()">Delete All Listings</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Delete confirm -->
+  <div id="deleteModal" class="confirm-overlay" style="display:none">
+    <div class="confirm-box">
+      <h3>Delete Property?</h3>
+      <p>This listing will be permanently removed from the site.</p>
+      <div class="confirm-actions">
+        <button class="btn-ghost" onclick="document.getElementById('deleteModal').style.display='none'">Cancel</button>
+        <button class="btn-danger" id="confirmDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast" style="display:none"></div>
+
+<script>
+// ============================================================
+//  SHARED
+// ============================================================
+const STORAGE_KEY = 'homefind_listings';
+const HASH_KEY    = 'homefind_pw_hash';
+const SESSION_KEY = 'homefind_session_token';
+const ATTEMPTS_KEY = 'homefind_login_attempts';
+const LOCKOUT_KEY  = 'homefind_lockout_until';
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS   = 5 * 60 * 1000;
+
+function getListings() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+}
+function saveListings(l) { localStorage.setItem(STORAGE_KEY, JSON.stringify(l)); }
+
+function formatPrice(p) { return '$' + Number(p).toLocaleString(); }
+
+function parseMapUrl(url) {
+  if (!url) return null;
+  if (url.includes('google.com/maps/embed')) return url;
+  if (/maps\.google\.com\/maps\?(.+)/.test(url)) return 'https://www.google.com/maps?' + url.match(/maps\.google\.com\/maps\?(.+)/)[1] + '&output=embed';
+  const m = url.match(/@(-?[\d.]+),(-?[\d.]+)/);
+  if (m) return `https://www.google.com/maps?q=${m[1]},${m[2]}&output=embed&z=15`;
+  if (/^-?[\d.]+\s*,\s*-?[\d.]+$/.test(url.trim())) return `https://www.google.com/maps?q=${url.trim()}&output=embed&z=15`;
+  return url;
+}
+
+function showToast(message, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = message; t.className = 'toast ' + type; t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+// ============================================================
+//  ROUTER
+// ============================================================
+function goHome() {
+  window.location.hash = '';
+}
+function goAdmin() {
+  window.location.hash = 'admin';
+}
+
+function route() {
+  const hash = window.location.hash;
+  if (hash === '#admin') {
+    document.getElementById('visitorApp').style.display = 'none';
+    document.getElementById('adminRoot').style.display = 'block';
+    document.body.style.overflow = '';
+    bootAdmin();
+  } else {
+    document.getElementById('visitorApp').style.display = 'block';
+    document.getElementById('adminRoot').style.display = 'none';
+    document.body.style.overflow = '';
+    closePropertyModal();
+    allListings = getListings();
+    applySearch();
+  }
+}
+
+window.addEventListener('hashchange', route);
+
+// ============================================================
+//  VISITOR — state
+// ============================================================
+let allListings = [];
+let filteredListings = [];
+let modalSlideIndex = 0;
+let modalPhotos = [];
+
+function renderCard(listing) {
+  const firstPhoto = listing.photos && listing.photos.length > 0 ? listing.photos[0] : null;
+  const photoCount = listing.photos ? listing.photos.length : 0;
+  return `
+    <div class="property-card" onclick="openPropertyModal('${listing.id}')">
+      <div class="card-image">
+        ${firstPhoto
+          ? `<img src="${firstPhoto}" alt="${listing.title}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=card-image-placeholder><svg width=40 height=40 viewBox=&quot;0 0 24 24&quot; fill=none stroke=&quot;#c4b5a0&quot; stroke-width=1.5><rect x=3 y=3 width=18 height=18 rx=2/><circle cx=8.5 cy=8.5 r=1.5/><polyline points=&quot;21 15 16 10 5 21&quot;/></svg><span>No photo</span></div>'" />`
+          : `<div class="card-image-placeholder"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#c4b5a0" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>No photos</span></div>`}
+        <span class="card-type-badge">${listing.type || 'Property'}</span>
+        ${photoCount > 1 ? `<span class="card-photo-count"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>${photoCount}</span>` : ''}
+      </div>
+      <div class="card-body">
+        <div class="card-price">${formatPrice(listing.price)}<span>/month</span></div>
+        <div class="card-title">${listing.title}</div>
+        ${listing.address ? `<div class="card-address"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${listing.address}</div>` : ''}
+        <div class="card-meta">
+          ${listing.bedrooms ? `<span class="card-meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>${listing.bedrooms} bed</span>` : ''}
+          ${listing.bathrooms ? `<span class="card-meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6 6.5 3.5a1.5 1.5 0 0 0-1-.5C4.683 3 4 3.683 4 4.5V17a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><line x1="10" y1="5" x2="8" y2="7"/><line x1="2" y1="12" x2="22" y2="12"/></svg>${listing.bathrooms} bath</span>` : ''}
+          ${listing.area ? `<span class="card-meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>${Number(listing.area).toLocaleString()} sq ft</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderListings(listings) {
+  const grid = document.getElementById('listingsGrid');
+  const empty = document.getElementById('emptyState');
+  const count = document.getElementById('listingsCount');
+  count.textContent = listings.length === 1 ? '1 property' : `${listings.length} properties`;
+  if (listings.length === 0) { grid.innerHTML = ''; empty.style.display = 'flex'; }
+  else { empty.style.display = 'none'; grid.innerHTML = listings.map(renderCard).join(''); }
+}
+
+function applySearch() {
+  const q = (document.getElementById('searchInput').value || '').toLowerCase();
+  const minPrice = Number(document.getElementById('filterMinPrice').value) || 0;
+  const maxPrice = Number(document.getElementById('filterMaxPrice').value) || Infinity;
+  const minBeds = Number(document.getElementById('filterBedrooms').value) || 0;
+  const type = document.getElementById('filterType').value;
+  filteredListings = allListings.filter(l => {
+    const price = Number(l.price) || 0, beds = Number(l.bedrooms) || 0;
+    return (!q || [l.title,l.address,l.description,l.type].join(' ').toLowerCase().includes(q))
+      && price >= minPrice && price <= maxPrice
+      && (!minBeds || beds >= minBeds)
+      && (!type || l.type === type);
+  });
+  renderListings(filteredListings);
+}
+
+function resetFilters() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('filterMinPrice').value = '';
+  document.getElementById('filterMaxPrice').value = '';
+  document.getElementById('filterBedrooms').value = '';
+  document.getElementById('filterType').value = '';
+  filteredListings = [...allListings];
+  renderListings(filteredListings);
+}
+
+// Property modal
+function openPropertyModal(id) {
+  const listing = allListings.find(l => l.id === id);
+  if (!listing) return;
+  modalPhotos = listing.photos || [];
+  modalSlideIndex = 0;
+  const amenityMap = { amWifi:'WiFi', amParking:'Parking', amPool:'Swimming Pool', amGym:'Gym', amSecurity:'Security', amWater:'Water Included', amElec:'Electricity Included', amFurnished:'Furnished', amPets:'Pets Allowed', amGarden:'Garden' };
+  const amenities = listing.amenities || {};
+  const pills = Object.entries(amenityMap).filter(([k]) => amenities[k]).map(([,v]) => `<span class="amenity-pill">${v}</span>`).join('');
+  let mapHtml = '';
+  if (listing.mapUrl) { const s = parseMapUrl(listing.mapUrl); if (s) mapHtml = `<div class="modal-section-title">Location</div><iframe class="modal-map" src="${s}" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`; }
+  let contactHtml = listing.phone ? `<div class="modal-contact"><div><p>Interested in this property?</p><span>Contact the landlord directly</span></div><a href="tel:${listing.phone}" class="btn-call">Call ${listing.phone}</a></div>` : '';
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-slideshow" id="modalSlideshow">${buildSlideshow()}</div>
+    <div class="modal-body">
+      <div class="modal-title-row"><div class="modal-title">${listing.title}</div><div class="modal-price">${formatPrice(listing.price)}<small>/mo</small></div></div>
+      ${listing.address ? `<div class="modal-address"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${listing.address}</div>` : ''}
+      <div class="modal-specs">
+        ${listing.type ? `<div class="modal-spec"><label>Type</label><span>${listing.type}</span></div>` : ''}
+        ${listing.bedrooms ? `<div class="modal-spec"><label>Bedrooms</label><span>${listing.bedrooms}</span></div>` : ''}
+        ${listing.bathrooms ? `<div class="modal-spec"><label>Bathrooms</label><span>${listing.bathrooms}</span></div>` : ''}
+        ${listing.area ? `<div class="modal-spec"><label>Area</label><span>${Number(listing.area).toLocaleString()} sq ft</span></div>` : ''}
+      </div>
+      ${listing.description ? `<div class="modal-section-title">Description</div><div class="modal-desc">${listing.description}</div>` : ''}
+      ${pills ? `<div class="modal-section-title">Amenities</div><div class="amenity-pills">${pills}</div>` : ''}
+      ${mapHtml}${contactHtml}
+    </div>`;
+  document.getElementById('propertyModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function buildSlideshow() {
+  if (modalPhotos.length === 0) return `<div class="slideshow-no-photo"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>No photos available</span></div>`;
+  const dots = modalPhotos.map((_,i) => `<button class="slide-dot ${i===modalSlideIndex?'active':''}" onclick="goSlide(${i})"></button>`).join('');
+  return `<img src="${modalPhotos[modalSlideIndex]}" alt="Property photo" onerror="this.src=''" />
+    ${modalPhotos.length > 1 ? `<button class="slide-btn slide-prev" onclick="changeSlide(-1)">&#8249;</button><button class="slide-btn slide-next" onclick="changeSlide(1)">&#8250;</button><div class="slide-dots">${dots}</div>` : ''}`;
+}
+function changeSlide(dir) { modalSlideIndex=(modalSlideIndex+dir+modalPhotos.length)%modalPhotos.length; document.getElementById('modalSlideshow').innerHTML=buildSlideshow(); }
+function goSlide(i) { modalSlideIndex=i; document.getElementById('modalSlideshow').innerHTML=buildSlideshow(); }
+function closeModal(e) { if (e.target===e.currentTarget) closePropertyModal(); }
+function closePropertyModal() { const m=document.getElementById('propertyModal'); if(m) m.style.display='none'; document.body.style.overflow=''; }
+document.addEventListener('keydown', e => { if (e.key==='Escape') closePropertyModal(); });
+
+// ============================================================
+//  CRYPTO / AUTH
+// ============================================================
+async function hashPassword(password) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function generateToken() { const a=new Uint8Array(32); crypto.getRandomValues(a); return Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function getStoredHash() { return localStorage.getItem(HASH_KEY); }
+async function seedDefaultHash() { if (!getStoredHash()) { localStorage.setItem(HASH_KEY, await hashPassword('admin123')); } }
+function isLoggedIn() { return !!sessionStorage.getItem(SESSION_KEY); }
+function createSession() { sessionStorage.setItem(SESSION_KEY, generateToken()); }
+function destroySession() { sessionStorage.removeItem(SESSION_KEY); }
+
+// Rate limiting
+function getLockoutState() { return { lockoutUntil: Number(localStorage.getItem(LOCKOUT_KEY))||0, attempts: Number(localStorage.getItem(ATTEMPTS_KEY))||0 }; }
+function isLockedOut() { return Date.now() < getLockoutState().lockoutUntil; }
+function recordFailedAttempt() {
+  const { attempts } = getLockoutState();
+  const n = attempts + 1;
+  localStorage.setItem(ATTEMPTS_KEY, n);
+  if (n >= MAX_ATTEMPTS) { const until=Date.now()+LOCKOUT_MS; localStorage.setItem(LOCKOUT_KEY,until); localStorage.setItem(ATTEMPTS_KEY,0); return {lockedOut:true,until}; }
+  return {lockedOut:false,remaining:MAX_ATTEMPTS-n};
+}
+function clearFailedAttempts() { localStorage.removeItem(ATTEMPTS_KEY); localStorage.removeItem(LOCKOUT_KEY); }
+function formatLockoutTime(until) { const r=Math.ceil((until-Date.now())/1000); if(r<=0)return null; const m=Math.floor(r/60),s=r%60; return m>0?`${m}m ${s}s`:`${s}s`; }
+
+let lockoutTimer = null;
+function checkLockout() {
+  const banner=document.getElementById('lockoutBanner');
+  const submitBtn=document.getElementById('loginSubmitBtn');
+  if (!banner||!submitBtn) return;
+  const {lockoutUntil}=getLockoutState();
+  if (Date.now()<lockoutUntil) {
+    const t=formatLockoutTime(lockoutUntil);
+    if(!t){clearFailedAttempts();updateLockoutUI(false);return;}
+    banner.style.display='flex';
+    banner.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Too many failed attempts. Try again in <strong id="lockoutCountdown">${t}</strong>.`;
+    submitBtn.disabled=true; submitBtn.style.opacity='0.5'; submitBtn.style.cursor='not-allowed';
+    clearInterval(lockoutTimer);
+    lockoutTimer=setInterval(()=>{
+      const t2=formatLockoutTime(lockoutUntil);
+      if(!t2){clearInterval(lockoutTimer);clearFailedAttempts();updateLockoutUI(false);return;}
+      const el=document.getElementById('lockoutCountdown'); if(el) el.textContent=t2;
+    },1000);
+  } else { if(lockoutUntil>0) clearFailedAttempts(); updateLockoutUI(false); }
+}
+function updateLockoutUI(locked) {
+  const banner=document.getElementById('lockoutBanner'), btn=document.getElementById('loginSubmitBtn');
+  if(!banner||!btn) return;
+  if(!locked){banner.style.display='none';btn.disabled=false;btn.style.opacity='';btn.style.cursor='';const w=document.getElementById('attemptsWarning');if(w)w.style.display='none';}
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  if (isLockedOut()) { checkLockout(); return; }
+  const user=document.getElementById('loginUser').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  const errEl=document.getElementById('loginError');
+  const warnEl=document.getElementById('attemptsWarning');
+  const submitBtn=document.getElementById('loginSubmitBtn');
+  submitBtn.disabled=true; submitBtn.textContent='Signing in…'; errEl.style.display='none'; warnEl.style.display='none';
+  const inputHash=await hashPassword(pass);
+  const storedHash=getStoredHash();
+  if (user==='admin' && storedHash && inputHash===storedHash) {
+    clearFailedAttempts(); createSession();
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('adminDashboard').style.display='block';
+    initAdmin();
+  } else {
+    document.getElementById('loginPass').value=''; submitBtn.disabled=false; submitBtn.textContent='Sign In';
+    const result=recordFailedAttempt();
+    if (result.lockedOut) { errEl.style.display='none'; checkLockout(); }
+    else {
+      errEl.style.display='block'; errEl.textContent='Incorrect username or password.';
+      if (result.remaining<=2) { warnEl.style.display='block'; warnEl.textContent=`Warning: ${result.remaining} attempt${result.remaining===1?'':'s'} remaining before lockout.`; }
+    }
+  }
+}
+
+function handleLogout() { destroySession(); window.location.hash=''; }
+
+// ============================================================
+//  ADMIN — boot
+// ============================================================
+function bootAdmin() {
+  seedDefaultHash().then(()=>{
+    checkLockout();
+    if (isLoggedIn()) {
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('adminDashboard').style.display='block';
+      initAdmin();
+    } else {
+      document.getElementById('loginScreen').style.display='flex';
+      document.getElementById('adminDashboard').style.display='none';
+    }
+  });
+}
+
+function initAdmin() { renderStats(); renderAdminListings(); }
+
+function renderStats() {
+  const listings=getListings(), total=listings.length;
+  const avg=total?Math.round(listings.reduce((s,l)=>s+Number(l.price||0),0)/total):0;
+  const types=[...new Set(listings.map(l=>l.type).filter(Boolean))].length;
+  document.getElementById('statsRow').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total Listings</div><div class="stat-value">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">Avg. Monthly Rent</div><div class="stat-value">${total?'$'+avg.toLocaleString():'—'}</div></div>
+    <div class="stat-card"><div class="stat-label">Property Types</div><div class="stat-value">${types}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Photos</div><div class="stat-value">${listings.reduce((s,l)=>s+(l.photos?.length||0),0)}</div></div>`;
+}
+
+function renderAdminListings() {
+  const listings=getListings(), grid=document.getElementById('adminListingsGrid'), empty=document.getElementById('adminEmptyState');
+  if (listings.length===0){grid.innerHTML='';empty.style.display='flex';return;}
+  empty.style.display='none';
+  grid.innerHTML=listings.map(l=>{
+    const photo=l.photos&&l.photos.length>0?l.photos[0]:null;
+    return `<div class="admin-card">
+      <div class="admin-card-img">${photo?`<img src="${photo}" alt="${l.title}" onerror="this.parentElement.innerHTML='<div class=admin-card-no-img><svg width=32 height=32 viewBox=&quot;0 0 24 24&quot; fill=none stroke=&quot;#c4b5a0&quot; stroke-width=1.5><rect x=3 y=3 width=18 height=18 rx=2/><circle cx=8.5 cy=8.5 r=1.5/><polyline points=&quot;21 15 16 10 5 21&quot;/></svg></div>'" />`:`<div class="admin-card-no-img"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#c4b5a0" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`}</div>
+      <div class="admin-card-body">
+        <div class="admin-card-title">${l.title}</div>
+        <div class="admin-card-meta">${[l.type,l.bedrooms?l.bedrooms+' bed':''].filter(Boolean).join(' · ')}</div>
+        <div class="admin-card-price">$${Number(l.price).toLocaleString()}<span style="font-size:.8rem;font-weight:500;color:#6b5e50">/mo</span></div>
+        <div class="admin-card-actions">
+          <button class="btn-edit" onclick="editListing('${l.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit</button>
+          <button class="btn-del" onclick="confirmDelete('${l.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Tabs
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p=>{p.style.display='none';p.classList.remove('active');});
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const pane=document.getElementById('tab-'+name); pane.style.display='block'; pane.classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(name==='add'&&!document.getElementById('editId').value) resetForm();
+}
+
+// Property form
+let pendingDeleteId=null, editingPhotos=[];
+
+function resetForm() {
+  document.getElementById('editId').value='';
+  document.getElementById('formTitle').textContent='Add New Property';
+  document.getElementById('submitBtn').textContent='Save Property';
+  document.getElementById('propertyForm').reset();
+  editingPhotos=[]; renderPhotoPreview();
+  document.getElementById('mapPreview').style.display='none';
+}
+
+function cancelEdit() { resetForm(); switchTab('listings',document.getElementById('tabBtnListings')); }
+
+function editListing(id) {
+  const l=getListings().find(x=>x.id===id); if(!l) return;
+  document.getElementById('editId').value=l.id;
+  document.getElementById('fTitle').value=l.title||'';
+  document.getElementById('fType').value=l.type||'';
+  document.getElementById('fPrice').value=l.price||'';
+  document.getElementById('fBedrooms').value=l.bedrooms||'';
+  document.getElementById('fBathrooms').value=l.bathrooms||'';
+  document.getElementById('fArea').value=l.area||'';
+  document.getElementById('fPhone').value=l.phone||'';
+  document.getElementById('fAddress').value=l.address||'';
+  document.getElementById('fDesc').value=l.description||'';
+  document.getElementById('fMapUrl').value=l.mapUrl||'';
+  const amenities=l.amenities||{};
+  ['amWifi','amParking','amPool','amGym','amSecurity','amWater','amElec','amFurnished','amPets','amGarden'].forEach(k=>{const el=document.getElementById(k);if(el)el.checked=!!amenities[k];});
+  editingPhotos=[...(l.photos||[])]; renderPhotoPreview();
+  if(l.mapUrl) previewMap();
+  document.getElementById('formTitle').textContent='Edit Property';
+  document.getElementById('submitBtn').textContent='Update Property';
+  switchTab('add',document.getElementById('tabBtnAdd'));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function saveProperty(e) {
+  e.preventDefault();
+  const listings=getListings(), editId=document.getElementById('editId').value;
+  const amenities={};
+  ['amWifi','amParking','amPool','amGym','amSecurity','amWater','amElec','amFurnished','amPets','amGarden'].forEach(k=>{amenities[k]=document.getElementById(k)?.checked||false;});
+  const data={
+    id:editId||Date.now().toString(),
+    title:document.getElementById('fTitle').value.trim(),
+    type:document.getElementById('fType').value,
+    price:document.getElementById('fPrice').value,
+    bedrooms:document.getElementById('fBedrooms').value,
+    bathrooms:document.getElementById('fBathrooms').value,
+    area:document.getElementById('fArea').value,
+    phone:document.getElementById('fPhone').value.trim(),
+    address:document.getElementById('fAddress').value.trim(),
+    description:document.getElementById('fDesc').value.trim(),
+    mapUrl:document.getElementById('fMapUrl').value.trim(),
+    photos:[...editingPhotos],
+    amenities,
+    createdAt:editId?(listings.find(l=>l.id===editId)?.createdAt||Date.now()):Date.now(),
+    updatedAt:Date.now()
+  };
+  if(editId){const idx=listings.findIndex(l=>l.id===editId);if(idx!==-1)listings[idx]=data;}
+  else listings.unshift(data);
+  saveListings(listings); resetForm(); renderAdminListings(); renderStats();
+  switchTab('listings',document.getElementById('tabBtnListings'));
+  showToast(editId?'Property updated!':'Property added!','success');
+}
+
+function confirmDelete(id) {
+  pendingDeleteId=id;
+  document.getElementById('deleteModal').style.display='flex';
+  document.getElementById('confirmDeleteBtn').onclick=()=>{
+    saveListings(getListings().filter(l=>l.id!==pendingDeleteId));
+    renderAdminListings(); renderStats();
+    document.getElementById('deleteModal').style.display='none';
+    showToast('Property deleted','success'); pendingDeleteId=null;
+  };
+}
+
+function deleteAll() {
+  if(!confirm('Delete ALL listings? This cannot be undone.')) return;
+  saveListings([]); renderAdminListings(); renderStats(); showToast('All listings deleted','success');
+}
+
+// Photos
+function handleFileSelect(e) {
+  Array.from(e.target.files).forEach(f=>{
+    if(f.size>5*1024*1024){showToast('File too large: '+f.name,'error');return;}
+    const r=new FileReader(); r.onload=ev=>{editingPhotos.push(ev.target.result);renderPhotoPreview();}; r.readAsDataURL(f);
+  }); e.target.value='';
+}
+function addPhotoUrl() {
+  const input=document.getElementById('photoUrlInput'), url=input.value.trim();
+  if(!url) return;
+  if(!url.startsWith('http')){showToast('Please enter a valid URL','error');return;}
+  editingPhotos.push(url); input.value=''; renderPhotoPreview();
+}
+document.getElementById('photoUrlInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addPhotoUrl();}});
+function removePhoto(idx){editingPhotos.splice(idx,1);renderPhotoPreview();}
+function renderPhotoPreview(){
+  document.getElementById('photoPreviewGrid').innerHTML=editingPhotos.map((src,i)=>`
+    <div class="photo-thumb"><img src="${src}" alt="Photo ${i+1}" onerror="this.src=''" /><button class="photo-thumb-remove" onclick="removePhoto(${i})">&times;</button></div>`).join('');
+}
+function dragOver(e){e.preventDefault();e.currentTarget.style.borderColor='#c8702a';e.currentTarget.style.background='#f5ede4';}
+function dropFiles(e){
+  e.preventDefault();e.currentTarget.style.borderColor='';e.currentTarget.style.background='';
+  Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')).forEach(f=>{
+    if(f.size>5*1024*1024){showToast('File too large: '+f.name,'error');return;}
+    const r=new FileReader();r.onload=ev=>{editingPhotos.push(ev.target.result);renderPhotoPreview();};r.readAsDataURL(f);
+  });
+}
+
+// Map preview
+function previewMap(){
+  const url=document.getElementById('fMapUrl').value.trim(), preview=document.getElementById('mapPreview');
+  if(!url){preview.style.display='none';return;}
+  const embedSrc=parseMapUrl(url);
+  if(embedSrc){preview.style.display='block';preview.innerHTML=`<iframe src="${embedSrc}" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;}
+  else{preview.style.display='none';showToast('Could not parse map URL','error');}
+}
+
+// Settings
+async function changePassword(e) {
+  e.preventDefault();
+  const oldPass=document.getElementById('sOldPass').value, newPass=document.getElementById('sNewPass').value, confirm=document.getElementById('sConfirmPass').value;
+  const submitBtn=e.target.querySelector('button[type=submit]');
+  if(newPass!==confirm){showSettingsMsg('New passwords do not match','error');return;}
+  if(newPass.length<8){showSettingsMsg('Password must be at least 8 characters','error');return;}
+  submitBtn.disabled=true; submitBtn.textContent='Updating…';
+  const oldHash=await hashPassword(oldPass), storedHash=getStoredHash();
+  if(oldHash!==storedHash){showSettingsMsg('Current password is incorrect','error');submitBtn.disabled=false;submitBtn.textContent='Update Password';return;}
+  localStorage.setItem(HASH_KEY,await hashPassword(newPass));
+  e.target.reset(); submitBtn.disabled=false; submitBtn.textContent='Update Password';
+  showSettingsMsg('Password updated successfully!','success');
+}
+function showSettingsMsg(text,type){
+  const msg=document.getElementById('settingsMsg'); msg.textContent=text; msg.className='settings-msg '+type; msg.style.display='block';
+  setTimeout(()=>{msg.style.display='none';},5000);
+}
+
+// ============================================================
+//  BOOT
+// ============================================================
+allListings = getListings();
+filteredListings = [...allListings];
+renderListings(filteredListings);
+route();
+
+// Refresh visitor listings periodically if another tab updates them
+setInterval(()=>{
+  if(document.getElementById('visitorApp').style.display!=='none'){
+    const fresh=getListings();
+    if(JSON.stringify(fresh)!==JSON.stringify(allListings)){allListings=fresh;applySearch();}
+  }
+},3000);
+</script>
+</body>
+</html>
